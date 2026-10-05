@@ -1,0 +1,338 @@
+{
+  "theme": "dark_primary_with_light_toggle",
+  "project_name": "Debian Server Hub (Painel de Serviços Debian)",
+  "language": "pt-BR",
+  "colors": {
+    "surfaces": [
+      {
+        "name": "page",
+        "kind": "solid",
+        "bg": "#0B0F17",
+        "on_bg": "#F1F5F9",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#38BDF8",
+          "error": "#F87171",
+          "success": "#4ADE80",
+          "warning": "#FBBF24"
+        }
+      },
+      {
+        "name": "panel",
+        "kind": "solid",
+        "bg": "#131B2E",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "border": "#1E293B",
+          "hover_border": "#334155",
+          "link": "#38BDF8",
+          "error": "#EF4444",
+          "success": "#22C55E",
+          "badge_bg": "#1E293B"
+        }
+      },
+      {
+        "name": "card_service",
+        "kind": "solid",
+        "bg": "#131C31",
+        "on_bg": "#FFFFFF",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "status_online": "#22C55E",
+          "status_offline": "#EF4444",
+          "status_checking": "#F59E0B",
+          "tag_bg": "#1E293B",
+          "tag_text": "#CBD5E1",
+          "port_chip": "#0EA5E9"
+        }
+      },
+      {
+        "name": "inverse",
+        "kind": "solid",
+        "bg": "#F8FAFC",
+        "on_bg": "#0F172A",
+        "on_bg_muted": "#64748B",
+        "roles": {
+          "link": "#0284C7",
+          "error": "#DC2626",
+          "success": "#16A34A"
+        }
+      },
+      {
+        "name": "header_nav",
+        "kind": "glass",
+        "contrast_against": "#0B0F17",
+        "guarantee": "backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/80 shadow-md shadow-black/20",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#38BDF8",
+          "active": "#FFFFFF",
+          "badge": "#E11D48"
+        }
+      },
+      {
+        "name": "modal_overlay",
+        "kind": "glass",
+        "contrast_against": "#090D16",
+        "guarantee": "backdrop-blur-md bg-black/75",
+        "on_bg": "#FFFFFF",
+        "on_bg_muted": "#94A3B8"
+      }
+    ],
+    "accent": "#0284C7",
+    "on_accent": "#FFFFFF",
+    "brand_debian": "#D70A53",
+    "on_brand_debian": "#FFFFFF",
+    "status_indicators": {
+      "online": "#22C55E",
+      "offline": "#EF4444",
+      "pending": "#F59E0B",
+      "unknown": "#64748B"
+    }
+  },
+  "typography": {
+    "font_family_heading": "Space Grotesk Variable, sans-serif",
+    "font_family_body": "Geist Variable, -apple-system, BlinkMacSystemFont, sans-serif",
+    "font_family_mono": "Geist Mono Variable, monospace",
+    "scale_px": {
+      "display": 52,
+      "h1": 40,
+      "h2": 28,
+      "h3": 22,
+      "body": 16,
+      "caption": 14
+    },
+    "typesetting_rules": {
+      "h1_h2_tracking": "tracking-tight",
+      "labels_overlines": "uppercase tracking-[0.18em] text-xs font-semibold text-slate-400",
+      "body_line_height": "leading-relaxed"
+    }
+  },
+  "entry_surfaces": {
+    "/": "portal hub — top status & search header, pinned quick access, category-grouped service grids with live status dots, host resolution toggle",
+    "/login": "minimal debian security auth — centered glass panel with debian crimson badge, system stats teaser, login form",
+    "/admin": "control center layout — dual-pane or tabbed management for services CRUD, category ordering, logo asset selector, user RBAC & password management"
+  },
+  "visual_enhancers": {
+    "debian_subtle_glow": "radial-gradient(circle at 50% -20%, rgba(215, 10, 83, 0.12), transparent 70%)",
+    "mesh_dark_grid": "linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)",
+    "card_hover_physics": "transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease; hover:-translate-y-1 hover:shadow-lg hover:shadow-cyan-950/20",
+    "service_logo_badge": "w-12 h-12 rounded-xl bg-slate-900/90 border border-slate-700/60 p-2 flex items-center justify-center shadow-inner overflow-hidden",
+    "port_chip_style": "font-mono text-xs font-medium px-2 py-0.5 rounded-md bg-sky-950/70 text-sky-400 border border-sky-800/40"
+  },
+  "component_hierarchy": {
+    "public_dashboard": [
+      {
+        "component": "ServerHeader.tsx",
+        "description": "Debian OS logo badge, server hostname/IP, uptime indicator, global search bar with keyboard shortcut (cmd+k / ctrl+k), quick filter by category, admin login trigger, theme toggle"
+      },
+      {
+        "component": "QuickMetricsBar.tsx",
+        "description": "Quick server summary: Total services, Online count, Offline count, Active categories, Server Port Overview, Real-time ping refresh button"
+      },
+      {
+        "component": "ServiceCard.tsx",
+        "description": "Rich service card displaying: Logo (custom uploaded / auto-fetched icon / fallback category icon), Service Name, Description, Host/Port tag, Protocol badge (HTTP/HTTPS), Live online/offline status dot with pulse, Category badge, Open in new tab action, Edit quick shortcut (if authenticated)"
+      },
+      {
+        "component": "CategorySection.tsx",
+        "description": "Category block with icon, customizable title, description, count badge, responsive auto-fitting grid (Tetris/Bento style for 1-4 columns), collapse/expand support"
+      },
+      {
+        "component": "HostResolutionSwitch.tsx",
+        "description": "Toolbar toggle allowing user to dynamically switch service targets: 'Acessar via IP Local' (e.g. 192.168.1.100:8080), 'Host Atual' (window.location.hostname:port), or 'URL Fixa' (configured custom domain)"
+      }
+    ],
+    "admin_management": [
+      {
+        "component": "AdminNavbar.tsx",
+        "description": "Breadcrumb, view public hub shortcut, active user status (Superadmin / Operador), logout button, quick add service button"
+      },
+      {
+        "component": "ServicesManager.tsx",
+        "description": "Full CRUD for services: Service name, Category selection, URL mode (Relative Port vs Full Fixed URL), Host default/override, Port number, Path (e.g. /cups, /phpmyadmin), Description, Icon picker (Upload file, CDN Dashboard-Icons preset, or Auto-detect favicon), Display order (Up/Down reorder + Drag), Visibility toggle, Healthcheck endpoint & timeout"
+      },
+      {
+        "component": "LogoSelectorModal.tsx",
+        "description": "Logo picker with three modes: 1) Preset homelab icons (phpMyAdmin, CUPS, Webmin, Docker, Portainer, Nextcloud, Nginx, Plex, Jellyfin, Pi-hole, Uptime Kuma, Transmission, qBittorrent, etc.), 2) Custom file upload (.png, .svg, .webp), 3) URL or Auto-Favicon fetcher"
+      },
+      {
+        "component": "CategoriesManager.tsx",
+        "description": "CRUD for service categories (e.g., 'Gerenciamento & Sistema', 'Bancos de Dados & PHP', 'Impressão & Dispositivos', 'Downloads & Mídia', 'Rede & Segurança') with icon picker, color accent, and order sorting"
+      },
+      {
+        "component": "UsersManager.tsx",
+        "description": "Superadmin panel to create new users, edit roles (Superadmin vs Operador), reset user passwords. Regular users have restricted view (can only alter their own password, cannot create users or edit superadmin password)"
+      },
+      {
+        "component": "ServerDiagnostics.tsx",
+        "description": "Interactive ping / status tester to check port accessibility directly from the browser/backend to detect if Webmin (10000), phpMyAdmin (80/8080), CUPS (631), etc. are responding"
+      }
+    ]
+  },
+  "grids_and_layouts": {
+    "public_page_layout": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10",
+    "services_grid": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5",
+    "admin_table_layout": "bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden shadow-xl",
+    "modal_form_grid": "grid grid-cols-1 md:grid-cols-2 gap-4"
+  },
+  "motion": {
+    "card_entrance": {
+      "initial": { "opacity": 0, "y": 12 },
+      "animate": { "opacity": 1, "y": 0 },
+      "transition": { "duration": 0.25, "ease": "easeOut" }
+    },
+    "status_pulse": "relative flex h-3 w-3 (ping animation with opacity-75 on active green dot)",
+    "modal_spring": {
+      "type": "spring",
+      "damping": 25,
+      "stiffness": 300
+    }
+  },
+  "accessibility": {
+    "focus_rings": "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
+    "contrast_check": "All text tokens meet minimum 4.5:1 APCA/WCAG ratio. Slate-400 on slate-900 (5.8:1), White on slate-900 (15:1), Sky-400 on slate-900 (6.2:1)",
+    "aria_labels": "All icon-only buttons (copy port, edit, delete, reorder up/down, open link) have explicit aria-label in Portuguese",
+    "data_testids": "Strict role-based kebab-case testids on all interactive elements"
+  },
+  "image_urls": {
+    "server_datacenter_hero": {
+      "category": "background_hero",
+      "url": "https://images.unsplash.com/photo-1785682231847-93265d8e633d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDF8MHwxfHNlYXJjaHw0fHxzZXJ2ZXIlMjByb29tJTIwcmFjayUyMGRhdGFjZW50ZXJ8ZW58MHx8fHwxNzkxMjQzNTM0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Server rack with networking hardware for background accent"
+    },
+    "workspace_clean": {
+      "category": "about_context",
+      "url": "https://images.unsplash.com/photo-1614624533048-a9c2f9cb5a96?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHxtaW5pbWFsJTIwdGVjaCUyMHdvcmtzcGFjZSUyMGRlc2t0b3B8ZW58MHx8fHwxNzkxMjQzNTM0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Minimal clean tech workstation"
+    }
+  },
+  "preset_homelab_icons": {
+    "phpmyadmin": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/phpmyadmin.png",
+    "cups": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/cups.png",
+    "webmin": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/webmin.png",
+    "debian": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/debian.png",
+    "docker": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/docker.png",
+    "portainer": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/portainer.png",
+    "nginx": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nginx.png",
+    "apache": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/apache.png",
+    "transmission": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/transmission.png",
+    "qbittorrent": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/qbittorrent.png",
+    "pihole": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/pi-hole.png",
+    "nextcloud": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/nextcloud.png",
+    "uptime_kuma": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/uptime-kuma.png",
+    "cockpit": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/cockpit.png",
+    "samba": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/samba.png",
+    "generic_server": "https://cdn.jsdelivr.net/gh/walkxcode/dashboard-icons/png/server.png"
+  },
+  "default_seed_services": [
+    {
+      "name": "PHPMyAdmin",
+      "category": "Banco de Dados & Web",
+      "description": "Interface web para administração de bancos de dados MySQL e MariaDB",
+      "url_mode": "relative",
+      "port": 80,
+      "path": "/phpmyadmin",
+      "protocol": "http",
+      "icon_key": "phpmyadmin",
+      "order": 1,
+      "healthcheck_path": "/phpmyadmin/"
+    },
+    {
+      "name": "Webmin",
+      "category": "Gerenciamento do Servidor",
+      "description": "Painel de controle e administração baseada na web para Debian Linux",
+      "url_mode": "relative",
+      "port": 10000,
+      "path": "/",
+      "protocol": "https",
+      "icon_key": "webmin",
+      "order": 2,
+      "healthcheck_path": "/"
+    },
+    {
+      "name": "CUPS (Servidor de Impressão)",
+      "category": "Serviços Internos",
+      "description": "Common UNIX Printing System para gerenciamento de impressoras e filas",
+      "url_mode": "relative",
+      "port": 631,
+      "path": "/",
+      "protocol": "http",
+      "icon_key": "cups",
+      "order": 3,
+      "healthcheck_path": "/"
+    },
+    {
+      "name": "Servidor de Arquivos & Downloads",
+      "category": "Armazenamento & Mídia",
+      "description": "Diretório de arquivos compartilhados, ISOs e central de downloads",
+      "url_mode": "relative",
+      "port": 8080,
+      "path": "/downloads",
+      "protocol": "http",
+      "icon_key": "generic_server",
+      "order": 4,
+      "healthcheck_path": "/downloads"
+    },
+    {
+      "name": "Portainer Docker",
+      "category": "Gerenciamento do Servidor",
+      "description": "Gestão visual de containers, stacks e volumes Docker no servidor",
+      "url_mode": "relative",
+      "port": 9000,
+      "path": "/",
+      "protocol": "http",
+      "icon_key": "portainer",
+      "order": 5,
+      "healthcheck_path": "/api/status"
+    },
+    {
+      "name": "Uptime Kuma",
+      "category": "Monitoramento & Rede",
+      "description": "Monitoramento de disponibilidade e alertas de rede auto-hospedado",
+      "url_mode": "relative",
+      "port": 3001,
+      "path": "/",
+      "protocol": "http",
+      "icon_key": "uptime_kuma",
+      "order": 6,
+      "healthcheck_path": "/"
+    }
+  ],
+  "testing_attributes": {
+    "search_input": "data-testid=\"search-services-input\"",
+    "category_filter": "data-testid=\"category-filter-item\"",
+    "service_card": "data-testid=\"service-card-item\"",
+    "service_open_button": "data-testid=\"service-open-link\"",
+    "admin_login_button": "data-testid=\"admin-login-nav-btn\"",
+    "login_username_input": "data-testid=\"login-username-input\"",
+    "login_password_input": "data-testid=\"login-password-input\"",
+    "login_submit_button": "data-testid=\"login-submit-btn\"",
+    "add_service_button": "data-testid=\"admin-add-service-btn\"",
+    "edit_service_button": "data-testid=\"admin-edit-service-btn\"",
+    "delete_service_button": "data-testid=\"admin-delete-service-btn\"",
+    "reorder_up_button": "data-testid=\"admin-reorder-up-btn\"",
+    "reorder_down_button": "data-testid=\"admin-reorder-down-btn\"",
+    "service_modal_save": "data-testid=\"service-modal-save-btn\"",
+    "category_add_button": "data-testid=\"admin-add-category-btn\"",
+    "user_create_button": "data-testid=\"admin-create-user-btn\"",
+    "user_password_reset": "data-testid=\"admin-reset-password-btn\"",
+    "host_mode_toggle": "data-testid=\"host-mode-toggle-btn\""
+  },
+  "instructions_to_main_agent": [
+    "1. Adote o visual profissional e clean: paleta Obsidian/Slate escuro (#0B0F17) com destaque crimson característico do Debian (#D70A53) e acentos em Azul/Ciano (#0EA5E9, #38BDF8).",
+    "2. O portal principal (/) é público e aberto para visualização de qualquer pessoa na rede local sem autenticação prévia.",
+    "3. No topo do portal público, crie uma barra de busca rápida (filtrando por nome, descrição, porta ou categoria), um seletor de modo de host ('Host da URL Atual', 'IP Fixo' ou 'Personalizado'), estatísticas de status online/offline em tempo real e atalho para Login de Administração.",
+    "4. Os cards de serviços devem permitir resolução dinâmica da URL: se o serviço for relativo (ex: porta 10000, path '/'), a URL gerada deve usar `window.location.hostname:10000/` para que funcione tanto acessando por IP (192.168.x.x) quanto por nome de máquina (ex: debian-server.local) ou localhost.",
+    "5. Suporte para checagem de status online/offline: adicione um endpoint no backend FastAPI `/api/services/{id}/ping` ou `/api/services/healthcheck-all` que teste conectividade via TCP/HTTP no servidor e retorne o status em tempo real com indicador visual no card.",
+    "6. Área Administrativa (/admin ou modal protegido):",
+    "   - Gerenciamento de Serviços (CRUD completo): nome, categoria, modo de link (porta relativa vs URL completa), porta, caminho, descrição, ícone (upload de arquivo ou galeria de ícones de dashboard pré-definidos / dashboard-icons CDN), reordenação com botões subir/descer e visibilidade ativo/inativo.",
+    "   - Gerenciamento de Categorias (CRUD + ordenação).",
+    "   - Gerenciamento de Usuários com RBAC: Superadmin cria novos usuários e altera senhas de qualquer um. Usuários comuns só alteram a própria senha e não podem criar usuários nem alterar senha do superadmin.",
+    "7. Todas as mensagens, formulários, botões e descrições devem estar em Português do Brasil (pt-BR) impecável.",
+    "8. Utilize `sonner` para toasts de notificação de feedback e Shadcn components (@base-ui/react) devidamente customizados.",
+    "9. Garanta que todos os elementos interativos tenham `data-testid` kebab-case conforme a seção `testing_attributes`."
+  ]
+}
