@@ -43,11 +43,20 @@ Config em `backend/.env`: `DATABASE_URL` (SQLite local por padrão; aponte para
 MySQL em produção — ver `deploy/README-DEBIAN.md`), `CORS_ORIGINS`,
 `ADMIN_USERNAME`/`ADMIN_PASSWORD` (usados no seed inicial).
 
-## Deploy em produção (Debian + Apache + MySQL)
+## Deploy em produção
 
-Veja `deploy/README-DEBIAN.md` — scripts prontos (`install.sh`,
-`apache-portal-27bpmm.conf`, `portal-27bpmm.service`) para instalar o portal no
-servidor real, usando o MySQL/MariaDB existente e o Apache já configurado.
+Duas opções, escolha uma:
+
+- **Coolify (Docker Compose)** — `Dockerfile` + `docker-compose.yml` na raiz do
+  projeto. Veja `deploy/README-COOLIFY.md` para o passo a passo e, principalmente,
+  a configuração de `STATUS_HOST` (serviços monitorados rodam no host, fora do
+  container).
+- **Debian + Apache direto (sem Docker)** — `deploy/README-DEBIAN.md`, com
+  `install.sh`, `apache-portal-27bpmm.conf` e `portal-27bpmm.service`.
+
+Em produção, `backend/server.py` já serve o frontend compilado (`frontend/dist`)
+junto com a API no mesmo processo/porta — não precisa de um servidor estático
+separado.
 
 ## Login padrão (seed)
 
