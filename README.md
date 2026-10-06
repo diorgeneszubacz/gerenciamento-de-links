@@ -47,7 +47,7 @@ MySQL em produção — ver `deploy/README-DEBIAN.md`), `CORS_ORIGINS`,
 
 Duas opções, escolha uma:
 
-- **Coolify (Docker Compose)** — `Dockerfile` + `docker-compose.yml` na raiz do
+- **Coolify (Docker Compose)** — `Dockerfile` + `docker-compose.yaml` na raiz do
   projeto. Veja `deploy/README-COOLIFY.md` para o passo a passo e, principalmente,
   a configuração de `STATUS_HOST` (serviços monitorados rodam no host, fora do
   container).

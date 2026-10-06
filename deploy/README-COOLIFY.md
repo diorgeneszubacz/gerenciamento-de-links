@@ -9,7 +9,7 @@ em `/api` **e** os arquivos estáticos compilados do React (ver
 nativo para "compilar o Node e depois colocar o resultado dentro do runtime do
 Python" — por isso a Coolify/Railway recomendam **Docker Compose** para esse
 tipo de stack combinada, não nixpacks.toml. Os arquivos abaixo (`Dockerfile` +
-`docker-compose.yml`, na raiz do projeto) já fazem isso num build multi-stage;
+`docker-compose.yaml`, na raiz do projeto) já fazem isso num build multi-stage;
 não é necessário criar o `nixpacks.toml`.
 
 ## O que já está pronto
@@ -17,14 +17,17 @@ não é necessário criar o `nixpacks.toml`.
 - **`Dockerfile`** (raiz): builda o frontend (`yarn build`), depois copia o
   resultado para dentro da imagem Python e inicia `uvicorn` servindo tudo na
   porta `8001` (API em `/api/*`, resto é a SPA React).
-- **`docker-compose.yml`** (raiz): serviço `app` (a imagem acima) + serviço
+- **`docker-compose.yaml`** (raiz): serviço `app` (a imagem acima) + serviço
   `mysql` (MariaDB com volume persistente). Pronto para usar o build pack
-  **Docker Compose** do Coolify.
+  **Docker Compose** do Coolify. **O nome do arquivo importa**: o Coolify, por
+  padrão, só procura `docker-compose.yaml` (extensão `.yaml`) na raiz do repo
+  — por isso o arquivo tem esse nome exato, não `.yml`.
 
 ## Passo a passo no Coolify
 
 1. **New Resource → Docker Compose**, apontando para este repositório
-   (branch/commit) e o arquivo `docker-compose.yml` na raiz.
+   (branch/commit). Deixe o campo **"Docker Compose Location"** com o valor
+   padrão (`/docker-compose.yaml`) — não precisa digitar nada.
 2. Em **Environment Variables**, defina (gera valores fortes — não use os
    defaults do arquivo em produção):
    - `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`
@@ -46,7 +49,7 @@ do container, `127.0.0.1` significa "o próprio container" — por isso a
 checagem de status (TCP) precisa de um host que aponte para a **máquina
 física**:
 
-- `docker-compose.yml` já mapeia `host.docker.internal` para o host via
+- `docker-compose.yaml` já mapeia `host.docker.internal` para o host via
   `extra_hosts: host-gateway` (funciona no Docker recente para Linux) e usa
   isso como `STATUS_HOST` por padrão.
 - Se o status aparecer sempre "offline" depois do deploy, troque `STATUS_HOST`
@@ -55,7 +58,7 @@ física**:
 
 ## Banco de dados: usar o MySQL do compose ou o seu já existente
 
-- **Padrão (mais simples):** deixe o serviço `mysql` do `docker-compose.yml`
+- **Padrão (mais simples):** deixe o serviço `mysql` do `docker-compose.yaml`
   rodando — ele já cria o banco `portal27bpmm` e o usuário `portal` sozinho.
 - **Se preferir reaproveitar o MySQL que você já tem no servidor:** apague o
   serviço `mysql` do compose e troque a env `DATABASE_URL` do serviço `app`
