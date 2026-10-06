@@ -77,6 +77,22 @@ class StatusMap(BaseModel):
     checked_at: datetime
 
 
+class SystemHealth(BaseModel):
+    hostname: str
+    os_name: str
+    cpu_percent: float
+    cpu_count: int
+    load_avg: list[float]
+    mem_total: int
+    mem_used: int
+    mem_percent: float
+    disk_total: int
+    disk_used: int
+    disk_percent: float
+    uptime_seconds: int
+    checked_at: datetime
+
+
 # ---------- Logos ----------
 class LogoSuggestIn(BaseModel):
     name: str = ""

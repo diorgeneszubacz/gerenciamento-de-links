@@ -10,6 +10,7 @@ import { categoryIcon } from "@/lib/category-icons";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BrandMark from "@/components/BrandMark";
+import SystemHealthBar from "@/components/SystemHealthBar";
 import ServiceLogo from "@/components/ServiceLogo";
 import StatusDot from "@/components/StatusDot";
 import type { DotState } from "@/components/StatusDot";
@@ -58,7 +59,7 @@ function ServiceCard({ service, state, index }: { service: Service; state: DotSt
 function Metric({ label, value, icon: Icon, tone, testId }: { label: string; value: string | number; icon: typeof Wifi; tone: string; testId: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 backdrop-blur">
-      <Icon className={cn("size-4", tone)} />
+      <Icon className={cn("size-4 shrink-0", tone)} />
       <div>
         <div data-testid={testId} className="font-heading text-xl font-semibold leading-none text-white">{value}</div>
         <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</div>
@@ -127,7 +128,7 @@ export default function Portal() {
           <Link to="/" className="flex items-center gap-3" data-testid="brand-home-link">
             <BrandMark />
             <div className="hidden sm:block">
-              <div className="font-heading text-base font-semibold leading-tight text-white">Server Hub</div>
+              <div className="font-heading text-base font-semibold leading-tight text-white">27º BPM/M</div>
               <div data-testid="server-hostname" className="font-mono text-xs text-slate-400">{window.location.hostname}</div>
             </div>
           </Link>
@@ -159,8 +160,8 @@ export default function Portal() {
         <section className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl animate-fade-up">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-crimson">Painel de serviços</p>
-            <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight text-white sm:text-5xl">
-              Tudo do seu servidor,<br className="hidden sm:block" /> em um só lugar.
+            <h1 data-testid="portal-title" className="mt-2 font-heading text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              27º Batalhão de Polícia Militar Metropolitano
             </h1>
             <p className="mt-3 text-base leading-relaxed text-slate-400">
               Acesse rapidamente as ferramentas e páginas hospedadas nesta máquina.
@@ -173,6 +174,8 @@ export default function Portal() {
             <Metric label="Categorias" value={categories.length} icon={Layers} tone="text-crimson" testId="metric-categories" />
           </div>
         </section>
+
+        <SystemHealthBar />
 
         <div className="flex flex-wrap items-center gap-2">
           <button

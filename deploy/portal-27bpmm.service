@@ -1,0 +1,16 @@
+[Unit]
+Description=Portal 27 BPM/M - API (FastAPI)
+After=network.target mongod.service
+Wants=mongod.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/portal-27bpmm/backend
+ExecStart=/opt/portal-27bpmm/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8001 --workers 1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

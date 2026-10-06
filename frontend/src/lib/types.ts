@@ -45,6 +45,22 @@ export interface StatusMap {
   checked_at: string;
 }
 
+export interface SystemHealth {
+  hostname: string;
+  os_name: string;
+  cpu_percent: number;
+  cpu_count: number;
+  load_avg: number[];
+  mem_total: number;
+  mem_used: number;
+  mem_percent: number;
+  disk_total: number;
+  disk_used: number;
+  disk_percent: number;
+  uptime_seconds: number;
+  checked_at: string;
+}
+
 export interface LogoSuggestIn {
   name: string;
   url_mode: UrlMode;

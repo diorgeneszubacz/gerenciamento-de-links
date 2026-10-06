@@ -29,9 +29,9 @@ export default function Admin() {
     <div className="hub-backdrop min-h-svh">
       <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
-          <BrandMark className="size-9" />
+          <BrandMark className="h-10" />
           <div>
-            <div className="font-heading text-base font-semibold leading-tight text-white">Server Hub</div>
+            <div className="font-heading text-base font-semibold leading-tight text-white">27º BPM/M</div>
             <div className="text-xs text-slate-400">Painel administrativo</div>
           </div>
           <div className="ml-auto flex items-center gap-2">
