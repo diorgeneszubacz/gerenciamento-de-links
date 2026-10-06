@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+# MySQL connection (SQLAlchemy async)
 from lib.db import engine, init_db  # noqa: E402
 from lib.seed import seed_defaults  # noqa: E402
 from routers import admin, auth, portal, system, users  # noqa: E402
