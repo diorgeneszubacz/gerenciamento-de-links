@@ -29,7 +29,7 @@ function ServiceCard({ service, state, index }: { service: Service; state: DotSt
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut", delay: Math.min(index * 0.03, 0.3) }}
-      className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-[#131C31]/90 p-3 transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-lg hover:shadow-sky-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+      className="group flex w-[calc(50%-0.375rem)] items-center gap-3 rounded-xl border sm:w-56 border-slate-800 bg-[#131C31]/90 p-3 transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-lg hover:shadow-sky-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
     >
       <ServiceLogo logo={service.logo} name={service.name} className="size-10 p-1.5" />
       <div className="min-w-0 flex-1">
@@ -91,11 +91,11 @@ export default function Portal() {
   }, [services, categories, query, activeCat]);
 
   const onlineCount = statuses ? services.filter((s) => statuses[s.id]).length : null;
-  const sections = categories
-    .map((c) => ({ cat: c, items: filtered.filter((s) => s.category_id === c.id) }))
-    .filter((s) => s.items.length > 0);
-
-  let cardIndex = 0;
+  // Flat list ordered like the admin: category order first, then service order.
+  const catRank = Object.fromEntries(categories.map((c) => [c.id, c.order]));
+  const ordered = [...filtered].sort(
+    (a, b) => (catRank[a.category_id] ?? 999) - (catRank[b.category_id] ?? 999) || a.order - b.order,
+  );
 
   return (
     <div className="hub-backdrop min-h-svh">
@@ -190,14 +190,14 @@ export default function Portal() {
         </div>
 
         {portalQ.isLoading && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-16 animate-pulse rounded-xl border border-slate-800 bg-slate-900/60" />
+          <div className="flex flex-wrap gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-16 w-56 animate-pulse rounded-xl border border-slate-800 bg-slate-900/60" />
             ))}
           </div>
         )}
 
-        {!portalQ.isLoading && sections.length === 0 && (
+        {!portalQ.isLoading && ordered.length === 0 && (
           <div data-testid="empty-state" className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 p-12 text-center text-slate-400">
             {portalQ.isError
               ? "Não foi possível carregar os serviços agora."
@@ -207,26 +207,13 @@ export default function Portal() {
           </div>
         )}
 
-        {sections.map(({ cat, items }) => {
-          const Icon = categoryIcon(cat.icon);
-          return (
-            <section key={cat.id} data-testid="category-section" className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="flex size-8 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-sky-400">
-                  <Icon className="size-4" />
-                </span>
-                <h2 className="font-heading text-xl font-semibold tracking-tight text-white">{cat.name}</h2>
-                <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs text-slate-300">{items.length}</span>
-                <span className="h-px flex-1 bg-gradient-to-r from-slate-800 to-transparent" />
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {items.map((s) => (
-                  <ServiceCard key={s.id} service={s} state={stateOf(s.id)} index={cardIndex++} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+        {ordered.length > 0 && (
+          <div data-testid="services-grid" className="flex flex-wrap gap-3">
+            {ordered.map((svc, i) => (
+              <ServiceCard key={svc.id} service={svc} state={stateOf(svc.id)} index={i} />
+            ))}
+          </div>
+        )}
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-10 pt-4 text-xs text-slate-500 sm:px-6 lg:px-8">

@@ -1,44 +1,66 @@
-"""Shared Mongo handle — import `client`/`db` from here (server.py, routers, seed.py)."""
+"""Shared SQL database (MySQL/MariaDB in production, SQLite for local dev) via SQLAlchemy async.
 
-import logging
+DATABASE_URL examples:
+  mysql+aiomysql://portal:senha@127.0.0.1:3306/portal27bpmm?charset=utf8mb4
+  sqlite+aiosqlite:////app/backend/data/portal.db
+"""
+
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import ASCENDING, DESCENDING, IndexModel
+from sqlalchemy import Boolean, Column, DateTime, Integer, MetaData, String, Table, Text
+from sqlalchemy.dialects.mysql import MEDIUMTEXT
+from sqlalchemy.ext.asyncio import create_async_engine
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-mongo_url = os.environ["MONGO_URL"]
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ["DB_NAME"]]
+DATABASE_URL = os.environ["DATABASE_URL"]
+# pool_recycle < MySQL wait_timeout; pre_ping is skipped (aiomysql adapter ping() signature mismatch)
+engine = create_async_engine(DATABASE_URL, pool_recycle=1800)
 
-logger = logging.getLogger(__name__)
+metadata = MetaData()
 
-# One entry per collection: every field a route filters, sorts, or dedupes on. Applied by ensure_indexes() at startup.
-INDEXES: dict[str, list[IndexModel]] = {
-    "status_checks": [IndexModel([("timestamp", DESCENDING)], name="timestamp_desc")],
-    "users": [
-        IndexModel([("id", ASCENDING)], name="id", unique=True),
-        IndexModel([("username", ASCENDING)], name="username", unique=True),
-    ],
-    "categories": [
-        IndexModel([("id", ASCENDING)], name="id", unique=True),
-        IndexModel([("order", ASCENDING)], name="order"),
-    ],
-    "services": [
-        IndexModel([("id", ASCENDING)], name="id", unique=True),
-        IndexModel([("visible", ASCENDING), ("order", ASCENDING)], name="visible_order"),
-        IndexModel([("category_id", ASCENDING)], name="category_id"),
-    ],
-}
+users = Table(
+    "users", metadata,
+    Column("id", String(36), primary_key=True),
+    Column("username", String(40), nullable=False, unique=True),
+    Column("role", String(16), nullable=False, default="operator"),
+    Column("password_hash", String(255), nullable=False),
+    Column("created_at", DateTime, nullable=False),
+    mysql_charset="utf8mb4",
+)
+
+categories = Table(
+    "categories", metadata,
+    Column("id", String(36), primary_key=True),
+    Column("name", String(60), nullable=False),
+    Column("icon", String(30), nullable=False, default="folder"),
+    Column("position", Integer, nullable=False, default=0, index=True),
+    mysql_charset="utf8mb4",
+)
+
+services = Table(
+    "services", metadata,
+    Column("id", String(36), primary_key=True),
+    Column("name", String(80), nullable=False),
+    Column("description", String(240), nullable=False, default=""),
+    Column("category_id", String(36), nullable=False, index=True),
+    Column("url_mode", String(8), nullable=False, default="port"),
+    Column("protocol", String(8), nullable=False, default="http"),
+    Column("port", Integer, nullable=True),
+    Column("path", String(255), nullable=False, default="/"),
+    Column("url", String(500), nullable=True),
+    Column("logo", Text().with_variant(MEDIUMTEXT(), "mysql"), nullable=True),
+    Column("visible", Boolean, nullable=False, default=True),
+    Column("position", Integer, nullable=False, default=0, index=True),
+    mysql_charset="utf8mb4",
+)
 
 
-async def ensure_indexes() -> None:
-    for collection, models in INDEXES.items():
-        for model in models:  # one at a time so a bad spec skips only itself
-            try:
-                await db[collection].create_indexes([model])
-            except Exception as exc:  # never block boot on an index; the log line names what to fix
-                logger.error("ensure_indexes(%s.%s): %s", collection, model.document["name"], exc)
+async def init_db() -> None:
+    if DATABASE_URL.startswith("sqlite"):
+        db_file = DATABASE_URL.split(":///", 1)[-1]
+        Path(db_file).parent.mkdir(parents=True, exist_ok=True)
+    async with engine.begin() as conn:
+        await conn.run_sync(metadata.create_all)

@@ -12,7 +12,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-from lib.db import client, ensure_indexes  # noqa: E402
+from lib.db import engine, init_db  # noqa: E402
 from lib.seed import seed_defaults  # noqa: E402
 from routers import admin, auth, portal, system, users  # noqa: E402
 
@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.index_task = asyncio.create_task(ensure_indexes())
+    await init_db()
     try:
         await seed_defaults()
     except Exception as exc:
         logger.error("seed_defaults failed: %s", exc)
     yield
-    client.close()
+    await engine.dispose()
 
 
 app = FastAPI(lifespan=lifespan)

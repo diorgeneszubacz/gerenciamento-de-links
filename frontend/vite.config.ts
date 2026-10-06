@@ -88,6 +88,8 @@ export default defineConfig(async () => {
         "tailwind-merge",
       ],
     },
+    // Distinct folder name so the Apache install never clashes with an existing /var/www/html/assets.
+    build: { assetsDir: "portal-assets" },
     server: {
       host: true,
       port: 3000,

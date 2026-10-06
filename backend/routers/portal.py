@@ -5,9 +5,11 @@ import os
 from urllib.parse import urlparse
 
 from fastapi import APIRouter
+from sqlalchemy import select
 
-from lib.db import db
-from models.schemas import Category, PortalData, Service, StatusMap
+from lib.db import categories, engine, services
+from lib.mapping import to_category, to_service
+from models.schemas import PortalData, StatusMap
 from models.schemas import _now
 
 router = APIRouter(tags=["portal"])
@@ -15,9 +17,12 @@ router = APIRouter(tags=["portal"])
 
 @router.get("/portal", response_model=PortalData)
 async def portal():
-    cats = await db.categories.find({}, {"_id": 0}).sort("order", 1).to_list(500)
-    svcs = await db.services.find({"visible": True}, {"_id": 0}).sort("order", 1).to_list(2000)
-    return PortalData(categories=[Category(**c) for c in cats], services=[Service(**s) for s in svcs])
+    async with engine.connect() as conn:
+        cats = (await conn.execute(select(categories).order_by(categories.c.position))).all()
+        svcs = (await conn.execute(
+            select(services).where(services.c.visible.is_(True)).order_by(services.c.position)
+        )).all()
+    return PortalData(categories=[to_category(c) for c in cats], services=[to_service(s) for s in svcs])
 
 
 def target_of(svc: dict) -> tuple[str, int] | None:
@@ -47,7 +52,12 @@ async def tcp_check(host: str, port: int, timeout: float = 2.0) -> bool:
 
 @router.get("/status", response_model=StatusMap)
 async def status():
-    svcs = await db.services.find({"visible": True}, {"_id": 0, "id": 1, "url_mode": 1, "url": 1, "port": 1}).to_list(2000)
+    async with engine.connect() as conn:
+        rows = (await conn.execute(
+            select(services.c.id, services.c.url_mode, services.c.url, services.c.port)
+            .where(services.c.visible.is_(True))
+        )).all()
+    svcs = [dict(r._mapping) for r in rows]
     targets = {s["id"]: target_of(s) for s in svcs}
     unique = {t for t in targets.values() if t}
     results = dict(zip(unique, await asyncio.gather(*(tcp_check(h, p) for h, p in unique))))

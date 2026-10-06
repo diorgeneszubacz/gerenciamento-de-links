@@ -1,7 +1,6 @@
 [Unit]
 Description=Portal 27 BPM/M - API (FastAPI)
-After=network.target mongod.service
-Wants=mongod.service
+After=network.target mariadb.service mysql.service
 
 [Service]
 Type=simple

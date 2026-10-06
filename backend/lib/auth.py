@@ -8,8 +8,9 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 from fastapi import Depends, HTTPException, Request, Response
+from sqlalchemy import select
 
-from lib.db import db
+from lib.db import engine, users
 
 COOKIE_NAME = "hub_session"
 SESSION_DAYS = 7
@@ -45,6 +46,15 @@ def clear_session(response: Response) -> None:
     response.delete_cookie(COOKIE_NAME, path="/")
 
 
+async def find_user(**where: str) -> dict | None:
+    stmt = select(users)
+    for key, val in where.items():
+        stmt = stmt.where(users.c[key] == val)
+    async with engine.connect() as conn:
+        row = (await conn.execute(stmt)).first()
+    return dict(row._mapping) if row else None
+
+
 async def current_user(request: Request) -> dict:
     token = request.cookies.get(COOKIE_NAME)
     if not token:
@@ -53,7 +63,7 @@ async def current_user(request: Request) -> dict:
         payload = jwt.decode(token, _SECRET, algorithms=["HS256"])
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Sessão inválida")
-    user = await db.users.find_one({"id": payload.get("sub")}, {"_id": 0})
+    user = await find_user(id=str(payload.get("sub")))
     if not user:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
     return user

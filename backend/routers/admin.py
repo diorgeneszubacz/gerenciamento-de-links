@@ -4,10 +4,12 @@ import os
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import Table, delete, func, insert, select, update
 
 from lib.auth import current_user
-from lib.db import db
+from lib.db import categories, engine, services
 from lib.logos import ICON_CDNS, fetch_many, slug_variants
+from lib.mapping import service_values, to_category, to_service
 from models.schemas import (
     Category, CategoryIn, LogoSuggestIn, LogoSuggestion, OkResponse, ReorderIn, Service, ServiceIn,
 )
@@ -15,98 +17,112 @@ from models.schemas import (
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(current_user)])
 
 
-async def _reorder(collection, ids: list[str]) -> None:
-    for idx, _id in enumerate(ids):
-        await collection.update_one({"id": _id}, {"$set": {"order": idx}})
+async def _reorder(table: Table, ids: list[str]) -> None:
+    async with engine.begin() as conn:
+        for idx, _id in enumerate(ids):
+            await conn.execute(update(table).where(table.c.id == _id).values(position=idx))
 
 
-async def _next_order(collection, query: dict | None = None) -> int:
-    last = await collection.find(query or {}, {"_id": 0, "order": 1}).sort("order", -1).limit(1).to_list(1)
-    return (last[0]["order"] + 1) if last else 0
+async def _next_position(table: Table) -> int:
+    async with engine.connect() as conn:
+        last = (await conn.execute(select(func.max(table.c.position)))).scalar()
+    return (last + 1) if last is not None else 0
+
+
+async def _get(table: Table, id: str):
+    async with engine.connect() as conn:
+        return (await conn.execute(select(table).where(table.c.id == id))).first()
 
 
 # ---------- Categories ----------
 @router.get("/categories", response_model=list[Category])
 async def list_categories():
-    docs = await db.categories.find({}, {"_id": 0}).sort("order", 1).to_list(500)
-    return [Category(**d) for d in docs]
+    async with engine.connect() as conn:
+        rows = (await conn.execute(select(categories).order_by(categories.c.position))).all()
+    return [to_category(r) for r in rows]
 
 
 @router.post("/categories", response_model=Category)
 async def create_category(body: CategoryIn):
-    cat = Category(**body.model_dump(), order=await _next_order(db.categories))
-    await db.categories.insert_one(cat.model_dump())
+    cat = Category(**body.model_dump(), order=await _next_position(categories))
+    async with engine.begin() as conn:
+        await conn.execute(insert(categories).values(id=cat.id, name=cat.name, icon=cat.icon, position=cat.order))
     return cat
 
 
 @router.put("/categories/{id}", response_model=Category)
 async def update_category(id: str, body: CategoryIn):
-    doc = await db.categories.find_one_and_update(
-        {"id": id}, {"$set": body.model_dump()}, projection={"_id": 0}, return_document=True
-    )
-    if not doc:
+    async with engine.begin() as conn:
+        res = await conn.execute(update(categories).where(categories.c.id == id).values(**body.model_dump()))
+    if res.rowcount == 0 and not await _get(categories, id):
         raise HTTPException(status_code=404, detail="Categoria não encontrada")
-    return Category(**doc)
+    return to_category(await _get(categories, id))
 
 
 @router.delete("/categories/{id}", response_model=OkResponse)
 async def delete_category(id: str):
-    if await db.services.count_documents({"category_id": id}) > 0:
-        raise HTTPException(status_code=400, detail="Remova ou mova os serviços desta categoria antes de excluí-la")
-    res = await db.categories.delete_one({"id": id})
-    if res.deleted_count == 0:
+    async with engine.begin() as conn:
+        used = (await conn.execute(
+            select(func.count()).select_from(services).where(services.c.category_id == id)
+        )).scalar_one()
+        if used > 0:
+            raise HTTPException(status_code=400, detail="Remova ou mova os serviços desta categoria antes de excluí-la")
+        res = await conn.execute(delete(categories).where(categories.c.id == id))
+    if res.rowcount == 0:
         raise HTTPException(status_code=404, detail="Categoria não encontrada")
     return OkResponse()
 
 
 @router.post("/categories/reorder", response_model=OkResponse)
 async def reorder_categories(body: ReorderIn):
-    await _reorder(db.categories, body.ids)
+    await _reorder(categories, body.ids)
     return OkResponse()
 
 
 # ---------- Services ----------
 @router.get("/services", response_model=list[Service])
 async def list_services():
-    docs = await db.services.find({}, {"_id": 0}).sort("order", 1).to_list(2000)
-    return [Service(**d) for d in docs]
+    async with engine.connect() as conn:
+        rows = (await conn.execute(select(services).order_by(services.c.position))).all()
+    return [to_service(r) for r in rows]
 
 
 async def _ensure_category(cid: str) -> None:
-    if not await db.categories.find_one({"id": cid}):
+    if not await _get(categories, cid):
         raise HTTPException(status_code=400, detail="Categoria inválida")
 
 
 @router.post("/services", response_model=Service)
 async def create_service(body: ServiceIn):
     await _ensure_category(body.category_id)
-    svc = Service(**body.model_dump(), order=await _next_order(db.services))
-    await db.services.insert_one(svc.model_dump())
+    svc = Service(**body.model_dump(), order=await _next_position(services))
+    async with engine.begin() as conn:
+        await conn.execute(insert(services).values(**service_values(svc)))
     return svc
 
 
 @router.put("/services/{id}", response_model=Service)
 async def update_service(id: str, body: ServiceIn):
     await _ensure_category(body.category_id)
-    doc = await db.services.find_one_and_update(
-        {"id": id}, {"$set": body.model_dump()}, projection={"_id": 0}, return_document=True
-    )
-    if not doc:
+    if not await _get(services, id):
         raise HTTPException(status_code=404, detail="Serviço não encontrado")
-    return Service(**doc)
+    async with engine.begin() as conn:
+        await conn.execute(update(services).where(services.c.id == id).values(**body.model_dump()))
+    return to_service(await _get(services, id))
 
 
 @router.delete("/services/{id}", response_model=OkResponse)
 async def delete_service(id: str):
-    res = await db.services.delete_one({"id": id})
-    if res.deleted_count == 0:
+    async with engine.begin() as conn:
+        res = await conn.execute(delete(services).where(services.c.id == id))
+    if res.rowcount == 0:
         raise HTTPException(status_code=404, detail="Serviço não encontrado")
     return OkResponse()
 
 
 @router.post("/services/reorder", response_model=OkResponse)
 async def reorder_services(body: ReorderIn):
-    await _reorder(db.services, body.ids)
+    await _reorder(services, body.ids)
     return OkResponse()
 
 

@@ -1,28 +1,31 @@
-# Instalação no Debian + Apache (servidor 10.35.94.20)
+# Instalação no Debian + Apache + MySQL (servidor 10.35.94.20)
 
-## Em que linguagem é feito?
-- **Backend (API):** Python 3 + FastAPI, banco **MongoDB**.
+## Tecnologias
+- **Backend (API):** Python 3 + FastAPI, banco **MySQL/MariaDB** (o mesmo que você já usa;
+  as tabelas `users`, `categories` e `services` aparecem no phpMyAdmin, banco `portal27bpmm`).
 - **Interface:** React + TypeScript, compilada em arquivos estáticos (HTML/JS/CSS).
 
-Não é PHP, então **não basta copiar para /var/www/html**. O Apache serve a interface
-compilada e repassa (proxy) as chamadas `/api` para o serviço Python na porta 8001.
+Não é PHP: **só copiar para /var/www/html não funciona**. O Apache entrega a interface
+e repassa `/api` para o serviço Python (porta 8001), que roda como serviço do sistema.
 
-## Instalação automática
+## Instalação
 ```bash
-# na pasta do projeto, no servidor Debian 12
+# na pasta do projeto, no servidor
 sudo bash deploy/install.sh
+# se o root do MySQL usa senha:
+sudo MYSQL_ROOT_PASSWORD='sua_senha' bash deploy/install.sh
 ```
-O script instala Python, Node.js 22 (só para compilar), MongoDB 8, cria o serviço
-`portal-27bpmm` (systemd), configura o Apache e desativa o site padrão — assim
-**http://10.35.94.20/** abre direto no portal.
+O script:
+1. usa o MySQL/MariaDB existente (ou instala o MariaDB), cria o banco `portal27bpmm` e o usuário `portal`;
+2. cria o ambiente Python e o serviço `portal-27bpmm` (systemd);
+3. compila a interface (Node.js 22, só usado na compilação);
+4. configura o Apache: **http://10.35.94.20/** abre o portal, e tudo que já existe em
+   `/var/www/html` (`/NOVO/`, `/Downloads/`, `/27bpmm/`, `admin.php`) e `/phpmyadmin/`
+   continua funcionando normalmente.
 
-> Sua página PHP antiga em `/var/www/html` deixa de ser a inicial. Faça backup antes.
-> `/phpmyadmin` continua funcionando (Alias do Apache). Para a pasta de downloads,
-> descomente o bloco `Alias /downloads` em `deploy/apache-portal-27bpmm.conf`.
-
-> MongoDB 5+ exige CPU com suporte a AVX. Verifique com `grep avx /proc/cpuinfo`.
+> Se a sua página antiga tem `index.php` na raiz, ela continua acessível em `http://10.35.94.20/index.php`.
 
 ## Comandos úteis
 - Status da API: `systemctl status portal-27bpmm`
 - Logs: `journalctl -u portal-27bpmm -f`
-- Atualizar: copie a nova versão e rode `sudo bash deploy/install.sh` de novo (o `.env` é mantido).
+- Atualizar: copie a nova versão e rode o instalador de novo (o `.env` e o banco são mantidos).
