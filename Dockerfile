@@ -5,10 +5,8 @@
 # ---- stage 1: compile the frontend to static files ----
 FROM node:20-slim AS frontend-build
 WORKDIR /app/frontend
-COPY frontend/package.json frontend/yarn.lock ./
-RUN yarn install --frozen-lockfile
 COPY frontend/ ./
-RUN yarn build
+RUN yarn install && yarn build
 
 # ---- stage 2: python runtime that serves API + the compiled frontend ----
 FROM python:3.11-slim AS runtime
