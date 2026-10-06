@@ -26,6 +26,6 @@ Portal (pt-BR) listing services hosted on the user's Debian server, plus authent
 admin/admin123; 4 categories (Gerenciamento do Servidor, Banco de Dados & Web, Impressão, Downloads & Arquivos); services Webmin(https 10000), phpMyAdmin(80 /phpmyadmin), CUPS(631), Downloads(80 /downloads).
 
 ## v2
-- GET /api/system (public): CPU %, load, memória, disco (/ or DISK_PATH), uptime, hostname, OS — read from /proc. Portal shows "Saúde do servidor" bar, refetch 10s.
+- GET /api/system (public): CPU %, load, memória, disco (/ or DISK_PATH), uptime, hostname, OS — read from /proc. Portal shows 4 health tiles (CPU, Memória, Disco, Tempo ligado) under the 4 stat tiles in the top-right panel (same Metric component), refetch 10s. Service cards are compact: logo + name + status only (description/port in tooltip).
 - Branding: 27º BPM/M crest at /logo-27bpmm.png (header/login/admin, favicon); hero title "27º Batalhão de Polícia Militar Metropolitano".
 - Deploy for Debian+Apache in /app/deploy (install.sh, apache vhost w/ ProxyPass /api → 127.0.0.1:8001, systemd unit, README-DEBIAN.md).

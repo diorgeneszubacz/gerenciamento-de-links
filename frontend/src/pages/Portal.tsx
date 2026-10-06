@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { ArrowUpRight, LayoutGrid, Lock, RefreshCw, Search, Wifi, WifiOff, Layers } from "lucide-react";
+import { LayoutGrid, Lock, RefreshCw, Search, Wifi, WifiOff, Layers } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import type { PortalData, Service, StatusMap } from "@/lib/types";
 import { serviceHref, serviceTarget } from "@/lib/hub";
@@ -10,6 +10,7 @@ import { categoryIcon } from "@/lib/category-icons";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BrandMark from "@/components/BrandMark";
+import Metric from "@/components/Metric";
 import SystemHealthBar from "@/components/SystemHealthBar";
 import ServiceLogo from "@/components/ServiceLogo";
 import StatusDot from "@/components/StatusDot";
@@ -17,54 +18,29 @@ import type { DotState } from "@/components/StatusDot";
 import { cn } from "@/lib/utils";
 
 function ServiceCard({ service, state, index }: { service: Service; state: DotState; index: number }) {
+  const tip = [service.description, serviceTarget(service)].filter(Boolean).join(" · ");
   return (
     <motion.a
       data-testid="service-card-item"
       href={serviceHref(service)}
       target="_blank"
       rel="noopener noreferrer"
-      initial={{ opacity: 0, y: 12 }}
+      title={tip}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: "easeOut", delay: Math.min(index * 0.03, 0.3) }}
-      className="group relative flex flex-col gap-4 rounded-2xl border border-slate-800 bg-[#131C31]/90 p-5 transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-slate-600 hover:shadow-xl hover:shadow-sky-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+      className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-[#131C31]/90 p-3 transition-[transform,border-color,box-shadow] duration-200 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-slate-600 hover:shadow-lg hover:shadow-sky-950/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
     >
-      <div className="flex items-start justify-between gap-3">
-        <ServiceLogo logo={service.logo} name={service.name} />
-        <StatusDot state={state} showLabel testId={`service-status-${service.id}`} />
-      </div>
+      <ServiceLogo logo={service.logo} name={service.name} className="size-10 p-1.5" />
       <div className="min-w-0 flex-1">
-        <h3 data-testid="service-card-name" className="truncate font-heading text-lg font-semibold tracking-tight text-white">
+        <h3 data-testid="service-card-name" className="truncate font-heading text-[15px] font-semibold leading-tight tracking-tight text-white transition-colors duration-200 group-hover:text-sky-300">
           {service.name}
         </h3>
-        {service.description && (
-          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-400">{service.description}</p>
-        )}
-      </div>
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate rounded-md border border-sky-800/40 bg-sky-950/70 px-2 py-0.5 font-mono text-xs font-medium text-sky-400">
-          {service.protocol === "https" && service.url_mode === "port" ? "https " : ""}
-          {serviceTarget(service)}
-        </span>
-        <span
-          data-testid="service-open-link"
-          className="flex items-center gap-1 text-xs font-medium text-slate-400 transition-colors duration-200 group-hover:text-sky-400"
-        >
-          Abrir <ArrowUpRight className="size-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-        </span>
+        <div className="mt-1">
+          <StatusDot state={state} showLabel testId={`service-status-${service.id}`} />
+        </div>
       </div>
     </motion.a>
-  );
-}
-
-function Metric({ label, value, icon: Icon, tone, testId }: { label: string; value: string | number; icon: typeof Wifi; tone: string; testId: string }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 backdrop-blur">
-      <Icon className={cn("size-4 shrink-0", tone)} />
-      <div>
-        <div data-testid={testId} className="font-heading text-xl font-semibold leading-none text-white">{value}</div>
-        <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</div>
-      </div>
-    </div>
   );
 }
 
@@ -157,7 +133,7 @@ export default function Portal() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
-        <section className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <section className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl animate-fade-up">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-crimson">Painel de serviços</p>
             <h1 data-testid="portal-title" className="mt-2 font-heading text-4xl font-semibold tracking-tight text-white sm:text-5xl">
@@ -167,15 +143,14 @@ export default function Portal() {
               Acesse rapidamente as ferramentas e páginas hospedadas nesta máquina.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:w-auto">
+          <div data-testid="top-stats" className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4 lg:w-[660px] lg:shrink-0">
             <Metric label="Serviços" value={services.length} icon={LayoutGrid} tone="text-sky-400" testId="metric-total" />
             <Metric label="Online" value={onlineCount ?? "–"} icon={Wifi} tone="text-emerald-400" testId="metric-online" />
             <Metric label="Offline" value={onlineCount === null ? "–" : services.length - onlineCount} icon={WifiOff} tone="text-red-400" testId="metric-offline" />
             <Metric label="Categorias" value={categories.length} icon={Layers} tone="text-crimson" testId="metric-categories" />
+            <SystemHealthBar />
           </div>
         </section>
-
-        <SystemHealthBar />
 
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -215,9 +190,9 @@ export default function Portal() {
         </div>
 
         {portalQ.isLoading && (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-44 animate-pulse rounded-2xl border border-slate-800 bg-slate-900/60" />
+              <div key={i} className="h-16 animate-pulse rounded-xl border border-slate-800 bg-slate-900/60" />
             ))}
           </div>
         )}
@@ -244,7 +219,7 @@ export default function Portal() {
                 <span className="rounded-md bg-slate-800 px-2 py-0.5 text-xs text-slate-300">{items.length}</span>
                 <span className="h-px flex-1 bg-gradient-to-r from-slate-800 to-transparent" />
               </div>
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {items.map((s) => (
                   <ServiceCard key={s.id} service={s} state={stateOf(s.id)} index={cardIndex++} />
                 ))}
