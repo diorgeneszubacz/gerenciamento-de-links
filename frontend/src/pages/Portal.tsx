@@ -105,7 +105,6 @@ export default function Portal() {
             <BrandMark />
             <div className="hidden sm:block">
               <div className="font-heading text-base font-semibold leading-tight text-white">27º BPM/M</div>
-              <div data-testid="server-hostname" className="font-mono text-xs text-slate-400">{window.location.hostname}</div>
             </div>
           </Link>
           <div className="relative ml-auto w-full max-w-md">
