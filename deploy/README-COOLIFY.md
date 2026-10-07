@@ -32,9 +32,13 @@ não é necessário criar o `nixpacks.toml`.
    defaults do arquivo em produção):
    - `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`
    - `ADMIN_USERNAME`, `ADMIN_PASSWORD` (login inicial do painel admin)
+   - `JWT_SECRET` → string aleatória longa (ex.: `openssl rand -hex 32`); sem
+     ela o backend não inicia
    - `CORS_ORIGINS` → o domínio/IP que você vai acessar o portal (ex.:
-     `http://10.35.94.20` ou o domínio que o Coolify atribuir)
+     `http://10.35.94.20:8001,http://192.168.1.202:8001`)
    - `STATUS_HOST` → **veja a seção abaixo**, é o ponto mais importante
+   - `DISK_PATH` → ponto de montagem do seu RAID a ser exibido no card
+     "Disco" (ex.: `/srv/samba`); padrão já é esse no compose
 3. Deploy. O Coolify builda a imagem (passo `frontend-build` + `runtime`),
    sobe o `mysql` e o `app`, e expõe a porta `8001` pelo proxy dele (defina o
    domínio/porta pública na aba **Domains** do serviço `app`).
@@ -71,3 +75,18 @@ física**:
 Se preferir instalar direto no Debian com Apache (sem containers), use
 `deploy/install.sh` + `deploy/README-DEBIAN.md` — caminho equivalente, só que
 sem Docker.
+
+## Cards de disco: NVME (sistema) e Disco (RAID)
+
+O portal mostra dois cartões de armazenamento, cada um clicável para ver as
+partições que o compõem:
+
+- **NVME**: todo o disco do sistema (ex.: 512GB), somando o uso real de
+  `/`, `/home`, `/var`, `/tmp`, `/boot/efi`, etc. — não só a partição raiz.
+- **Disco**: o volume configurado em `DISK_PATH` (RAID1, por padrão
+  `/srv/samba`).
+
+Isso só funciona porque `docker-compose.yaml` monta a raiz do host inteira,
+somente leitura, em `/host` dentro do container (`volumes: - /:/host:ro`) —
+o backend lê os caminhos reais do servidor por ali, não o filesystem interno
+do container. Não remova esse volume nem a env `HOST_FS_PREFIX=/host`.

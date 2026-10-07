@@ -6,7 +6,8 @@
 #
 # Set these in Coolify's "Environment Variables" tab (defaults below are only
 # for local `docker compose up`):
-#   MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD, ADMIN_PASSWORD, CORS_ORIGINS, STATUS_HOST
+#   MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD, ADMIN_PASSWORD, CORS_ORIGINS,
+#   STATUS_HOST, JWT_SECRET, DISK_PATH
 
 services:
   app:
@@ -18,11 +19,26 @@ services:
       CORS_ORIGINS: "${CORS_ORIGINS:-*}"
       ADMIN_USERNAME: "${ADMIN_USERNAME:-admin}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-admin123}"
+      JWT_SECRET: "${JWT_SECRET:?defina um JWT_SECRET forte nas variaveis do Coolify}"
       # The services this portal links to (SCE, SGL, CUPS, Webmin...) run on the
       # Debian HOST, not inside this container - 127.0.0.1 here would mean "this
       # container". host.docker.internal (mapped below via extra_hosts) reaches
       # the host on Linux; swap for the host's LAN IP if that still fails.
       STATUS_HOST: "${STATUS_HOST:-host.docker.internal}"
+      # Disk cards: NVME_PATH = system disk (default "/"); DISK_PATH = the big
+      # storage volume shown as "Disco" (default "/srv/samba" - the RAID1
+      # mount on this deployment; change it if yours is mounted elsewhere).
+      # HOST_FS_PREFIX tells the app these live under the host-root bind
+      # mount below, not inside the container's own filesystem.
+      NVME_PATH: "${NVME_PATH:-/}"
+      DISK_PATH: "${DISK_PATH:-/srv/samba}"
+      HOST_FS_PREFIX: "/host"
+    volumes:
+      # Read-only, recursive bind of the WHOLE host filesystem: Docker clones
+      # all of the host's existing sub-mounts (/home, /var, /srv/samba, ...)
+      # into /host inside the container, so the app can read real host disk
+      # usage instead of its own internal container filesystem.
+      - /:/host:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
