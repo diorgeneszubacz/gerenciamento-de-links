@@ -45,6 +45,14 @@ export interface StatusMap {
   checked_at: string;
 }
 
+export interface DiskPartition {
+  mount: string;
+  device: string;
+  total: number;
+  used: number;
+  percent: number;
+}
+
 export interface SystemHealth {
   hostname: string;
   os_name: string;
@@ -57,6 +65,11 @@ export interface SystemHealth {
   disk_total: number;
   disk_used: number;
   disk_percent: number;
+  disk_partitions: DiskPartition[];
+  nvme_total: number;
+  nvme_used: number;
+  nvme_percent: number;
+  nvme_partitions: DiskPartition[];
   uptime_seconds: number;
   checked_at: string;
 }

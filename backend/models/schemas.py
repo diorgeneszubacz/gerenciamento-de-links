@@ -77,6 +77,14 @@ class StatusMap(BaseModel):
     checked_at: datetime
 
 
+class DiskPartition(BaseModel):
+    mount: str
+    device: str
+    total: int
+    used: int
+    percent: float
+
+
 class SystemHealth(BaseModel):
     hostname: str
     os_name: str
@@ -89,6 +97,11 @@ class SystemHealth(BaseModel):
     disk_total: int
     disk_used: int
     disk_percent: float
+    disk_partitions: list[DiskPartition]
+    nvme_total: int
+    nvme_used: int
+    nvme_percent: float
+    nvme_partitions: list[DiskPartition]
     uptime_seconds: int
     checked_at: datetime
 
