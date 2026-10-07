@@ -164,6 +164,19 @@ export default function Portal() {
           </button>
           {categories.map((c) => {
             const Icon = categoryIcon(c.icon);
+            if (c.icon === "network" || c.name === "Mapa de rede") {
+              return (
+                <Link
+                  key={c.id}
+                  to="/admin?tab=network"
+                  data-testid="network-category-link"
+                  className="flex items-center gap-1.5 rounded-full border border-sky-500/40 bg-sky-500/10 px-3.5 py-1.5 text-sm font-medium text-sky-300 transition-colors duration-200 hover:border-sky-400 hover:bg-sky-500/20"
+                  title="Abrir o NOC e o mapa de infraestrutura"
+                >
+                  <Icon className="size-3.5" /> {c.name} <span className="ml-1 text-[10px] uppercase tracking-wider text-sky-400/80">NOC</span>
+                </Link>
+              );
+            }
             return (
               <button
                 key={c.id}

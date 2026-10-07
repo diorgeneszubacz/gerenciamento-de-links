@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from sqlalchemy import Boolean, Column, DateTime, Integer, MetaData, String, Table, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, MetaData, String, Table, Text
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -54,6 +54,52 @@ services = Table(
     Column("logo", Text().with_variant(MEDIUMTEXT(), "mysql"), nullable=True),
     Column("visible", Boolean, nullable=False, default=True),
     Column("position", Integer, nullable=False, default=0, index=True),
+    mysql_charset="utf8mb4",
+)
+
+network_nodes = Table(
+    "network_nodes", metadata,
+    Column("id", String(36), primary_key=True),
+    Column("name", String(100), nullable=False),
+    Column("node_type", String(24), nullable=False, default="other"),
+    Column("description", String(240), nullable=False, default=""),
+    Column("host", String(255), nullable=True),
+    Column("monitor_protocol", String(12), nullable=False, default="icmp"),
+    Column("monitor_port", Integer, nullable=True),
+    Column("monitor_path", String(255), nullable=False, default="/"),
+    Column("position_x", Float, nullable=False, default=50),
+    Column("position_y", Float, nullable=False, default=50),
+    Column("enabled", Boolean, nullable=False, default=True),
+    Column("notes", Text, nullable=False, default=""),
+    Column("created_at", DateTime, nullable=False),
+    Column("updated_at", DateTime, nullable=False),
+    mysql_charset="utf8mb4",
+)
+
+network_ports = Table(
+    "network_ports", metadata,
+    Column("id", String(36), primary_key=True),
+    Column("node_id", String(36), nullable=False, index=True),
+    Column("name", String(40), nullable=False),
+    Column("comment", String(240), nullable=False, default=""),
+    Column("vlan", String(40), nullable=False, default=""),
+    Column("position", Integer, nullable=False, default=0, index=True),
+    Column("created_at", DateTime, nullable=False),
+    mysql_charset="utf8mb4",
+)
+
+network_links = Table(
+    "network_links", metadata,
+    Column("id", String(36), primary_key=True),
+    Column("source_node_id", String(36), nullable=False, index=True),
+    Column("target_node_id", String(36), nullable=False, index=True),
+    Column("source_port_id", String(36), nullable=True, index=True),
+    Column("target_port_id", String(36), nullable=True, index=True),
+    Column("label", String(120), nullable=False, default=""),
+    Column("link_type", String(20), nullable=False, default="ethernet"),
+    Column("comment", String(500), nullable=False, default=""),
+    Column("enabled", Boolean, nullable=False, default=True),
+    Column("created_at", DateTime, nullable=False),
     mysql_charset="utf8mb4",
 )
 

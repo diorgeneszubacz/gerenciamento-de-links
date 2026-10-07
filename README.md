@@ -5,7 +5,8 @@ Portal web para centralizar o acesso aos serviços internos do servidor Debian d
 Reúne em uma única tela os links para sistemas locais (SCE, SGL, CUPS, Webmin,
 phpMyAdmin, downloads, etc.), com status online/offline em tempo real, busca e
 métricas de saúde do servidor (CPU, memória, disco, uptime). Inclui painel
-administrativo autenticado para gerenciar categorias, serviços, logos e usuários.
+administrativo autenticado para gerenciar categorias, serviços, logos, usuários e um
+mapa de rede operacional.
 
 ## Stack
 
@@ -18,9 +19,10 @@ deploy/    Scripts de instalação para Debian + Apache + MySQL (produção)
 
 - **Backend**: `backend/server.py` monta `api_router` (prefixo `/api`), registrado
   por `app.include_router(api_router)`. Rotas organizadas em `backend/routers/`
-  (`auth`, `portal`, `admin`, `users`, `system`). Modelos Pydantic v2 em
+  (`auth`, `portal`, `admin`, `network`, `users`, `system`). Modelos Pydantic v2 em
   `backend/models/`. Acesso a dados via `lib/db.py` (tabelas `users`, `categories`,
-  `services`), sem ORM de objetos — `sqlalchemy.Table` + `select`/`insert`/`update`.
+  `services`, `network_nodes`, `network_ports` e `network_links`), sem ORM de objetos —
+  `sqlalchemy.Table` + `select`/`insert`/`update`.
 - **Frontend**: `src/pages/Portal.tsx` (página pública) e `src/pages/Admin.tsx`
   (painel administrativo). Chamadas de API sempre via `src/lib/api.ts`
   (`apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete`), dados carregados com
@@ -28,6 +30,26 @@ deploy/    Scripts de instalação para Debian + Apache + MySQL (produção)
 - **Status dos serviços**: checagem TCP (`routers/portal.py`) na combinação
   host:porta de cada serviço cadastrado — não depende de HTTP, funciona para
   qualquer serviço TCP (MySQL, SSH, impressão, etc.).
+
+## Mapa de rede / NOC
+
+A categoria **Mapa de rede** é criada automaticamente no primeiro boot e adicionada
+de forma idempotente a bancos já existentes. O atalho **NOC** no portal abre a aba
+administrativa protegida por login, onde é possível:
+
+- cadastrar roteadores, switches, firewalls, servidores, access points, patch panels e UPS;
+- monitorar cada equipamento por **ICMP ping**, **TCP**, **HTTP/HTTPS** ou deixá-lo como
+  documentação manual;
+- visualizar online/offline, latência, erro e protocolo em uma atualização automática de
+  30 segundos;
+- desenhar a topologia com nós arrastáveis e enlaces Ethernet, fibra, wireless ou lógicos;
+- associar cada enlace às portas de origem e destino;
+- manter portas identificadas por nome, VLAN e comentários operacionais (rack, destino,
+  patch cord, circuito, etc.).
+
+O ICMP é executado pelo servidor do portal. Em Docker a imagem instala `iputils-ping`; na
+instalação Debian direta o `deploy/install.sh` instala o mesmo pacote. Para ambientes em
+que ICMP é bloqueado, use TCP ou HTTP no cadastro do equipamento.
 
 ## Rodando localmente (dev)
 
