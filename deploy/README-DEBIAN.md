@@ -23,6 +23,10 @@ O script:
    `/var/www/html` (`/NOVO/`, `/Downloads/`, `/27bpmm/`, `admin.php`) e `/phpmyadmin/`
    continua funcionando normalmente.
 
+O instalador também coloca `iputils-ping`, usado pela aba **Mapa de rede / NOC** para
+sondas ICMP. Se a rede bloquear ICMP, cadastre o equipamento com monitoramento TCP ou
+HTTP/HTTPS no painel administrativo.
+
 > Se a sua página antiga tem `index.php` na raiz, ela continua acessível em `http://10.35.94.20/index.php`.
 
 ## Comandos úteis

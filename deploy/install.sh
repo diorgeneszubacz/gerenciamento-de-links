@@ -12,7 +12,7 @@ DB_USER="${DB_USER:-portal}"
 
 echo "==> Pacotes do sistema"
 apt-get update
-apt-get install -y python3 python3-venv curl rsync apache2
+apt-get install -y python3 python3-venv curl rsync apache2 iputils-ping
 
 echo "==> MySQL / MariaDB"
 if ! command -v mysql >/dev/null; then

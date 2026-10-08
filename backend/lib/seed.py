@@ -8,10 +8,10 @@ from pathlib import Path
 from sqlalchemy import func, insert, select
 
 from lib.auth import find_user, hash_password
-from lib.db import categories, engine, services, users
+from lib.db import categories, engine, network_zones, services, users
 from lib.logos import fetch_many
 from lib.mapping import service_values
-from models.schemas import Category, Service, User
+from models.schemas import Category, NetworkZone, Service, User
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +22,13 @@ CATEGORIES = [
     ("Downloads & Arquivos", "download"),
     ("Gerenciamento do Servidor", "server"),
     ("Impressão", "printer"),
+    ("Mapa de rede", "network"),
+]
+
+NETWORK_CATEGORY_ID = "00000000-0000-4000-8000-000000000027"
+NETWORK_ZONES = [
+    ("00000000-0000-4000-8000-000000000101", "Intranet", "10.35.94.0/24", "Rede interna corporativa", "#38bdf8"),
+    ("00000000-0000-4000-8000-000000000102", "Internet", "192.168.1.0/24", "Rede de acesso à Internet", "#f59e0b"),
 ]
 
 # (name, description, category index, protocol, port, path, logo: "crest" | dashboard-icons slug | None)
@@ -58,20 +65,54 @@ async def seed_defaults() -> None:
             ))
         logger.info("Seeded admin user")
 
+    async with engine.begin() as conn:
+        existing_zones = {row[0] for row in (await conn.execute(select(network_zones.c.name))).all()}
+        max_position = (await conn.execute(select(func.max(network_zones.c.position)))).scalar()
+        zone_rows = []
+        for index, (zone_id, name, cidr, description, color) in enumerate(NETWORK_ZONES):
+            if name not in existing_zones:
+                zone = NetworkZone(id=zone_id, name=name, cidr=cidr, description=description, color=color, order=(max_position or -1) + index + 1)
+                values = zone.model_dump()
+                values["position"] = values.pop("order")
+                values["created_at"] = values["created_at"].replace(tzinfo=None)
+                zone_rows.append(values)
+        if zone_rows:
+            await conn.execute(insert(network_zones), zone_rows)
+            logger.info("Seeded default network zones")
+
     async with engine.connect() as conn:
         count = (await conn.execute(select(func.count()).select_from(categories))).scalar_one()
     if count > 0:
+        async with engine.begin() as conn:
+            existing = (await conn.execute(
+                select(categories.c.id).where(categories.c.name == "Mapa de rede")
+            )).first()
+            if not existing:
+                position = (await conn.execute(select(func.max(categories.c.position)))).scalar()
+                await conn.execute(insert(categories).values(
+                    id=NETWORK_CATEGORY_ID,
+                    name="Mapa de rede",
+                    icon="network",
+                    position=(position + 1) if position is not None else 0,
+                ))
+                logger.info("Seeded the Mapa de rede category")
         return
 
-    cats = [Category(name=n, icon=i, order=idx) for idx, (n, i) in enumerate(CATEGORIES)]
+    cats: list[Category] = []
+    for idx, (name, icon) in enumerate(CATEGORIES):
+        values = {"name": name, "icon": icon, "order": idx}
+        if name == "Mapa de rede":
+            values["id"] = NETWORK_CATEGORY_ID
+        cats.append(Category(**values))
     slugs = [s[6] for s in SERVICES if s[6] and s[6] != "crest"]
     fetched = await fetch_many([(slug, slug, CDN.format(slug)) for slug in slugs])
     logos: dict[str, str | None] = {slug: data for slug, _, data in fetched}
     logos["crest"] = _crest()
+    category_ids = [category.id for category in cats]
 
     svcs = [
         Service(
-            name=name, description=desc, category_id=cats[ci].id, url_mode="port",
+            name=name, description=desc, category_id=category_ids[ci], url_mode="port",
             protocol=proto, port=port, path=path, logo=logos.get(logo) if logo else None, order=idx,
         )
         for idx, (name, desc, ci, proto, port, path, logo) in enumerate(SERVICES)

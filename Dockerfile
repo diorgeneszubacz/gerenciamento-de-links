@@ -13,7 +13,10 @@ FROM python:3.11-slim AS runtime
 WORKDIR /app
 
 COPY backend/requirements-docker.txt backend/requirements-docker.txt
-RUN pip install --no-cache-dir -r backend/requirements-docker.txt
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends iputils-ping \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir -r backend/requirements-docker.txt
 
 COPY backend/ backend/
 COPY --from=frontend-build /app/frontend/dist frontend/dist

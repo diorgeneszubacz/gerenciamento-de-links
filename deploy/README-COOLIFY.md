@@ -16,7 +16,8 @@ não é necessário criar o `nixpacks.toml`.
 
 - **`Dockerfile`** (raiz): builda o frontend (`yarn build`), depois copia o
   resultado para dentro da imagem Python e inicia `uvicorn` servindo tudo na
-  porta `8001` (API em `/api/*`, resto é a SPA React).
+  porta `8001` (API em `/api/*`, resto é a SPA React). A imagem também instala
+  `iputils-ping` para as sondas ICMP da aba Mapa de rede / NOC.
 - **`docker-compose.yaml`** (raiz): serviço `app` (a imagem acima) + serviço
   `mysql` (MariaDB com volume persistente). Pronto para usar o build pack
   **Docker Compose** do Coolify. **O nome do arquivo importa**: o Coolify, por
@@ -59,6 +60,10 @@ física**:
 - Se o status aparecer sempre "offline" depois do deploy, troque `STATUS_HOST`
   para o IP real do servidor na rede interna (ex.: `10.35.94.20`) — funciona
   sempre, independente da versão do Docker.
+
+O NOC usa o host/IP informado em cada equipamento. ICMP, TCP e HTTP/HTTPS saem do
+container; portanto firewall, rota e regras de saída do host Docker precisam permitir
+esses testes. Quando ICMP não for permitido, prefira TCP ou HTTP no cadastro.
 
 ## Banco de dados: usar o MySQL do compose ou o seu já existente
 

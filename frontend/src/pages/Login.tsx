@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import BrandMark from "@/components/BrandMark";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -22,7 +23,8 @@ export default function Login() {
     onSuccess: (u) => {
       beginSession();
       toast.success(`Bem-vindo, ${u.username}`);
-      navigate("/admin");
+      const next = new URLSearchParams(location.search).get("next");
+      navigate(next?.startsWith("/") && !next.startsWith("//") ? next : "/admin");
     },
     onError: (e) => toast.error(errorMessage(e, "Falha no login")),
   });

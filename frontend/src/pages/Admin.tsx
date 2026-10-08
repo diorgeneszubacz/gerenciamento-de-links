@@ -1,7 +1,7 @@
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Layers, LayoutGrid, Loader2, LogOut, UserCog, Users } from "lucide-react";
+import { ExternalLink, Layers, LayoutGrid, Loader2, LogOut, Network, UserCog, Users } from "lucide-react";
 import { apiGet, ApiError } from "@/lib/api";
 import type { User } from "@/lib/types";
 import { endSession } from "@/lib/session";
@@ -13,15 +13,20 @@ import ServicesManager from "@/components/admin/ServicesManager";
 import CategoriesManager from "@/components/admin/CategoriesManager";
 import UsersManager from "@/components/admin/UsersManager";
 import AccountPanel from "@/components/admin/AccountPanel";
+import NetworkManager from "@/components/admin/NetworkManager";
 import { cn } from "@/lib/utils";
 
 export default function Admin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const meQ = useQuery({ queryKey: ["me"], queryFn: () => apiGet<User>("/auth/me"), retry: false });
 
   useEffect(() => {
-    if (meQ.error instanceof ApiError && meQ.error.status === 401) navigate("/login", { replace: true });
-  }, [meQ.error, navigate]);
+    if (meQ.error instanceof ApiError && meQ.error.status === 401) {
+      const next = `${location.pathname}${location.search}`;
+      navigate(`/login?next=${encodeURIComponent(next)}`, { replace: true });
+    }
+  }, [meQ.error, navigate, location.pathname, location.search]);
 
   const me = meQ.isError ? undefined : meQ.data;
 
@@ -60,10 +65,11 @@ export default function Admin() {
             {meQ.isLoading ? "Carregando…" : "Não foi possível verificar a sessão."}
           </div>
         ) : (
-          <Tabs defaultValue="services" className="gap-6">
+          <Tabs defaultValue={new URLSearchParams(location.search).get("tab") || "services"} className="gap-6">
             <TabsList className="h-auto flex-wrap bg-slate-900/80 p-1">
               <TabsTrigger value="services" data-testid="tab-services" className="gap-1.5 px-3 py-1.5"><LayoutGrid className="size-4" /> Serviços</TabsTrigger>
               <TabsTrigger value="categories" data-testid="tab-categories" className="gap-1.5 px-3 py-1.5"><Layers className="size-4" /> Categorias</TabsTrigger>
+              <TabsTrigger value="network" data-testid="tab-network" className="gap-1.5 px-3 py-1.5"><Network className="size-4" /> Mapa de rede</TabsTrigger>
               {me.role === "admin" && (
                 <TabsTrigger value="users" data-testid="tab-users" className="gap-1.5 px-3 py-1.5"><Users className="size-4" /> Usuários</TabsTrigger>
               )}
@@ -71,6 +77,7 @@ export default function Admin() {
             </TabsList>
             <TabsContent value="services"><ServicesManager /></TabsContent>
             <TabsContent value="categories"><CategoriesManager /></TabsContent>
+            <TabsContent value="network"><NetworkManager /></TabsContent>
             {me.role === "admin" && <TabsContent value="users"><UsersManager me={me} /></TabsContent>}
             <TabsContent value="account"><AccountPanel me={me} /></TabsContent>
           </Tabs>
