@@ -78,13 +78,32 @@ class StatusMap(BaseModel):
 
 
 # ---------- Network map / NOC ----------
-NetworkNodeType = Literal["router", "switch", "firewall", "server", "access_point", "patch_panel", "ups", "other"]
+NetworkNodeType = Literal["cloud", "router", "switch", "firewall", "server", "computer", "access_point", "patch_panel", "printer", "camera", "phone", "database", "nas", "ups", "other"]
 MonitorProtocol = Literal["icmp", "tcp", "http", "none"]
 NetworkLinkType = Literal["ethernet", "fiber", "wireless", "logical", "other"]
 
 
+class NetworkZoneIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    cidr: str = Field(default="", max_length=64)
+    description: str = Field(default="", max_length=240)
+    color: str = Field(default="#38bdf8", max_length=20)
+
+    @field_validator("name", "cidr", "description")
+    @classmethod
+    def _clean_text(cls, value: str) -> str:
+        return value.strip()
+
+
+class NetworkZone(NetworkZoneIn):
+    id: str = Field(default_factory=_uuid)
+    order: int = 0
+    created_at: datetime = Field(default_factory=_now)
+
+
 class NetworkNodeIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
+    zone_id: Optional[str] = None
     node_type: NetworkNodeType = "other"
     description: str = Field(default="", max_length=240)
     host: Optional[str] = Field(default=None, max_length=255)
@@ -181,6 +200,7 @@ class NetworkStatus(BaseModel):
 
 
 class NetworkTopology(BaseModel):
+    zones: list[NetworkZone] = []
     nodes: list[NetworkNode]
     ports: list[NetworkPort]
     links: list[NetworkLink]

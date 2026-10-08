@@ -12,13 +12,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Table, delete, func, insert, select, update
 
 from lib.auth import current_user
-from lib.db import engine, network_links, network_nodes, network_ports
+from lib.db import engine, network_links, network_nodes, network_ports, network_zones
 from models.schemas import (
     NetworkLink,
     NetworkLinkIn,
     NetworkNode,
     NetworkNodeIn,
     NetworkNodeStatus,
+    NetworkZone,
+    NetworkZoneIn,
     NetworkPositionIn,
     NetworkPort,
     NetworkPortIn,
@@ -81,21 +83,71 @@ async def _ensure_port(port_id: str | None, node_id: str, label: str) -> None:
 @router.get("/topology", response_model=NetworkTopology)
 async def topology():
     async with engine.connect() as conn:
+        zones = (await conn.execute(select(network_zones).order_by(network_zones.c.position, network_zones.c.name))).all()
         nodes = (await conn.execute(select(network_nodes).order_by(network_nodes.c.name))).all()
         ports = (await conn.execute(
             select(network_ports).order_by(network_ports.c.node_id, network_ports.c.position, network_ports.c.name)
         )).all()
         links = (await conn.execute(select(network_links).order_by(network_links.c.created_at))).all()
     return NetworkTopology(
+        zones=[NetworkZone(**{**_row(row), "order": _row(row).pop("position")}) for row in zones],
         nodes=[_to_node(row) for row in nodes],
         ports=[_to_port(row) for row in ports],
         links=[_to_link(row) for row in links],
     )
 
 
+# ---------- Zones ----------
+@router.get("/zones", response_model=list[NetworkZone])
+async def list_zones():
+    async with engine.connect() as conn:
+        rows = (await conn.execute(select(network_zones).order_by(network_zones.c.position, network_zones.c.name))).all()
+    return [NetworkZone(**{**_row(row), "order": _row(row).pop("position")}) for row in rows]
+
+
+async def _ensure_zone(zone_id: str | None) -> None:
+    if zone_id and not await _get(network_zones, zone_id):
+        raise HTTPException(status_code=400, detail="Rede lógica não encontrada")
+
+
+@router.post("/zones", response_model=NetworkZone)
+async def create_zone(body: NetworkZoneIn):
+    zone = NetworkZone(**body.model_dump())
+    async with engine.begin() as conn:
+        position = (await conn.execute(select(func.max(network_zones.c.position)))).scalar()
+        values = zone.model_dump()
+        values["position"] = (position + 1) if position is not None else 0
+        values["created_at"] = values["created_at"].replace(tzinfo=None)
+        await conn.execute(insert(network_zones).values(**values))
+    return NetworkZone(**{**values, "order": values["position"]})
+
+
+@router.put("/zones/{zone_id}", response_model=NetworkZone)
+async def update_zone(zone_id: str, body: NetworkZoneIn):
+    if not await _get(network_zones, zone_id):
+        raise HTTPException(status_code=404, detail="Rede lógica não encontrada")
+    async with engine.begin() as conn:
+        await conn.execute(update(network_zones).where(network_zones.c.id == zone_id).values(**body.model_dump()))
+    row = await _get(network_zones, zone_id)
+    data = _row(row)
+    data["order"] = data.pop("position")
+    return NetworkZone(**data)
+
+
+@router.delete("/zones/{zone_id}", response_model=OkResponse)
+async def delete_zone(zone_id: str):
+    if not await _get(network_zones, zone_id):
+        raise HTTPException(status_code=404, detail="Rede lógica não encontrada")
+    async with engine.begin() as conn:
+        await conn.execute(update(network_nodes).where(network_nodes.c.zone_id == zone_id).values(zone_id=None))
+        await conn.execute(delete(network_zones).where(network_zones.c.id == zone_id))
+    return OkResponse()
+
+
 # ---------- Nodes ----------
 @router.post("/nodes", response_model=NetworkNode)
 async def create_node(body: NetworkNodeIn):
+    await _ensure_zone(body.zone_id)
     node = NetworkNode(**body.model_dump())
     values = node.model_dump()
     values["created_at"] = values["created_at"].replace(tzinfo=None)
@@ -109,6 +161,7 @@ async def create_node(body: NetworkNodeIn):
 async def update_node(node_id: str, body: NetworkNodeIn):
     if not await _get(network_nodes, node_id):
         raise HTTPException(status_code=404, detail="Equipamento não encontrado")
+    await _ensure_zone(body.zone_id)
     values = body.model_dump()
     values["updated_at"] = _db_now()
     async with engine.begin() as conn:

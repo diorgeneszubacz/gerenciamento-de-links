@@ -8,10 +8,10 @@ from pathlib import Path
 from sqlalchemy import func, insert, select
 
 from lib.auth import find_user, hash_password
-from lib.db import categories, engine, services, users
+from lib.db import categories, engine, network_zones, services, users
 from lib.logos import fetch_many
 from lib.mapping import service_values
-from models.schemas import Category, Service, User
+from models.schemas import Category, NetworkZone, Service, User
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +26,10 @@ CATEGORIES = [
 ]
 
 NETWORK_CATEGORY_ID = "00000000-0000-4000-8000-000000000027"
+NETWORK_ZONES = [
+    ("00000000-0000-4000-8000-000000000101", "Intranet", "10.35.94.0/24", "Rede interna corporativa", "#38bdf8"),
+    ("00000000-0000-4000-8000-000000000102", "Internet", "192.168.1.0/24", "Rede de acesso à Internet", "#f59e0b"),
+]
 
 # (name, description, category index, protocol, port, path, logo: "crest" | dashboard-icons slug | None)
 SERVICES = [
@@ -60,6 +64,21 @@ async def seed_defaults() -> None:
                 created_at=admin.created_at.replace(tzinfo=None),
             ))
         logger.info("Seeded admin user")
+
+    async with engine.begin() as conn:
+        existing_zones = {row[0] for row in (await conn.execute(select(network_zones.c.name))).all()}
+        max_position = (await conn.execute(select(func.max(network_zones.c.position)))).scalar()
+        zone_rows = []
+        for index, (zone_id, name, cidr, description, color) in enumerate(NETWORK_ZONES):
+            if name not in existing_zones:
+                zone = NetworkZone(id=zone_id, name=name, cidr=cidr, description=description, color=color, order=(max_position or -1) + index + 1)
+                values = zone.model_dump()
+                values["position"] = values.pop("order")
+                values["created_at"] = values["created_at"].replace(tzinfo=None)
+                zone_rows.append(values)
+        if zone_rows:
+            await conn.execute(insert(network_zones), zone_rows)
+            logger.info("Seeded default network zones")
 
     async with engine.connect() as conn:
         count = (await conn.execute(select(func.count()).select_from(categories))).scalar_one()

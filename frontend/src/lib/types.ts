@@ -45,12 +45,26 @@ export interface StatusMap {
   checked_at: string;
 }
 
-export type NetworkNodeType = "router" | "switch" | "firewall" | "server" | "access_point" | "patch_panel" | "ups" | "other";
+export type NetworkNodeType = "cloud" | "router" | "switch" | "firewall" | "server" | "computer" | "access_point" | "patch_panel" | "printer" | "camera" | "phone" | "database" | "nas" | "ups" | "other";
 export type MonitorProtocol = "icmp" | "tcp" | "http" | "none";
 export type NetworkLinkType = "ethernet" | "fiber" | "wireless" | "logical" | "other";
 
+export interface NetworkZoneIn {
+  name: string;
+  cidr: string;
+  description: string;
+  color: string;
+}
+
+export interface NetworkZone extends NetworkZoneIn {
+  id: string;
+  order: number;
+  created_at: string;
+}
+
 export interface NetworkNodeIn {
   name: string;
+  zone_id: string | null;
   node_type: NetworkNodeType;
   description: string;
   host: string | null;
@@ -99,6 +113,7 @@ export interface NetworkLink extends NetworkLinkIn {
 }
 
 export interface NetworkTopology {
+  zones: NetworkZone[];
   nodes: NetworkNode[];
   ports: NetworkPort[];
   links: NetworkLink[];

@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiPost, apiPut } from "@/lib/api";
-import type { MonitorProtocol, NetworkNode, NetworkNodeIn, NetworkNodeType } from "@/lib/types";
+import type { MonitorProtocol, NetworkNode, NetworkNodeIn, NetworkNodeType, NetworkZone } from "@/lib/types";
 import { errorMessage } from "@/lib/hub";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,11 +16,13 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   node: NetworkNode | null;
+  zones: NetworkZone[];
   onSaved: () => void;
 }
 
 const blank: NetworkNodeIn = {
   name: "",
+  zone_id: null,
   node_type: "switch",
   description: "",
   host: "",
@@ -34,12 +36,19 @@ const blank: NetworkNodeIn = {
 };
 
 const nodeTypes: Array<[NetworkNodeType, string]> = [
+  ["cloud", "Nuvem / Internet"],
   ["router", "Roteador"],
   ["switch", "Switch"],
   ["firewall", "Firewall"],
   ["server", "Servidor"],
+  ["computer", "Computador"],
   ["access_point", "Access point"],
   ["patch_panel", "Patch panel"],
+  ["printer", "Impressora"],
+  ["camera", "Câmera IP"],
+  ["phone", "Telefone IP"],
+  ["database", "Banco de dados"],
+  ["nas", "NAS / Storage"],
   ["ups", "UPS"],
   ["other", "Outro"],
 ];
@@ -51,7 +60,7 @@ const protocols: Array<[MonitorProtocol, string]> = [
   ["none", "Sem monitoramento"],
 ];
 
-export default function NetworkNodeDialog({ open, onOpenChange, node, onSaved }: Props) {
+export default function NetworkNodeDialog({ open, onOpenChange, node, zones, onSaved }: Props) {
   const [form, setForm] = useState<NetworkNodeIn>(blank);
 
   useEffect(() => {
@@ -107,6 +116,13 @@ export default function NetworkNodeDialog({ open, onOpenChange, node, onSaved }:
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="network-node-description">Descrição curta</Label>
             <Input id="network-node-description" value={form.description} onChange={(event) => set("description", event.target.value)} placeholder="Função, local ou rack" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="network-node-zone">Rede / segmento</Label>
+            <select id="network-node-zone" value={form.zone_id ?? ""} onChange={(event) => set("zone_id", event.target.value || null)} className="flex h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus:border-ring focus:ring-3 focus:ring-ring/30">
+              <option value="" className="bg-slate-900">Sem rede definida</option>
+              {zones.map((zone) => <option key={zone.id} value={zone.id} className="bg-slate-900">{zone.name} · {zone.cidr}</option>)}
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="network-node-host">Host ou IP</Label>

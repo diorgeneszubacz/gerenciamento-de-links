@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
-import { Box, HardDrive, Network, Server, Shield, Wifi } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { NetworkNode, NetworkNodeStatus, NetworkNodeType, NetworkTopology as NetworkTopologyData } from "@/lib/types";
-import { NETWORK_NODE_TYPE_LABELS, networkStatusStyle } from "./network-constants";
+import type { NetworkNode, NetworkNodeStatus, NetworkTopology as NetworkTopologyData } from "@/lib/types";
+import { NETWORK_NODE_ICONS, NETWORK_NODE_TYPE_LABELS, networkStatusStyle } from "./network-constants";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -13,17 +12,6 @@ interface Props {
   onMove?: (node: NetworkNode, position: { position_x: number; position_y: number }) => void;
   onSelect?: (node: NetworkNode) => void;
 }
-
-const ICONS: Record<NetworkNodeType, LucideIcon> = {
-  router: Network,
-  switch: Network,
-  firewall: Shield,
-  server: Server,
-  access_point: Wifi,
-  patch_panel: HardDrive,
-  ups: Box,
-  other: Box,
-};
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
@@ -105,7 +93,7 @@ export default function NetworkTopology({ topology, statuses = {}, editable = fa
         const pos = positionOf(node);
         const status = statuses[node.id] ?? { node_id: node.id, status: "unknown", protocol: node.monitor_protocol, latency_ms: null, error: null, checked_at: null };
         const style = networkStatusStyle(status.status);
-        const Icon = ICONS[node.node_type] ?? Box;
+        const Icon: LucideIcon = NETWORK_NODE_ICONS[node.node_type];
         const portCount = topology.ports.filter((port) => port.node_id === node.id).length;
         return (
           <div
